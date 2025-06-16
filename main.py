@@ -227,6 +227,12 @@ def trigger_ota_update():
         firmware_url = "https://github.com/mahmoudrizkk/Kebda-and-Heart/"
         ota_updater = OTAUpdater(SSID, PASSWORD, firmware_url, "main.py")
         ota_updater.download_and_install_update_if_available()
+        oled.fill_rect(0, 0, WIDTH, 50, 0)
+        oled.text("OTA Success", 0, 10)
+        oled.text(str(e)[:16], 0, 20)
+        update_wifi_status()
+        oled.show()
+        time.sleep(3)
     except Exception as e:
         oled.fill_rect(0, 0, WIDTH, 50, 0)
         oled.text("OTA Failed", 0, 10)
