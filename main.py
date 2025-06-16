@@ -70,6 +70,7 @@ def update_wifi_status(force=False):
             oled.text("WiFi: Connected", 0, 50)
         else:
             oled.text("WiFi: Disconn.", 0, 50)
+            wlan.connect(SSID, PASSWORD)
         oled.show()
         last_status = status
 
