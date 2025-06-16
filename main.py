@@ -64,13 +64,25 @@ def connect_wifi():
 def update_wifi_status(force=False):
     global last_status
     status = wlan.isconnected()
+
+    if not status:
+        wlan.connect(SSID, PASSWORD)
+        retries = 10
+        while not wlan.isconnected() and retries > 0:
+            oled.fill_rect(0, 50, WIDTH, 14, 0)
+            oled.text("WiFi: Reconnecting", 0, 50)
+            oled.show()
+            time.sleep(0.5)
+            retries -= 1
+
+    # Update status on OLED
+    status = wlan.isconnected()
     if force or status != last_status:
-        oled.fill_rect(0, 50, WIDTH, 14, 0)  # Always clear line before writing
+        oled.fill_rect(0, 50, WIDTH, 14, 0)
         if status:
             oled.text("WiFi: Connected", 0, 50)
         else:
-            oled.text("WiFi: Disconn.", 0, 50)
-            wlan.connect(SSID, PASSWORD)
+            oled.text("WiFi: Failed     ", 0, 50)
         oled.show()
         last_status = status
 
