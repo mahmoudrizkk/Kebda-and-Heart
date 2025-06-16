@@ -3,6 +3,8 @@ import machine
 import time
 import urequests
 from ssd1306 import SSD1306_I2C
+from ota import OTAUpdater
+from WIFI_CONFIG import SSID, PASSWORD
 
 from machine import I2C, Pin
 from i2c_lcd import I2cLcd
@@ -203,6 +205,28 @@ def extract_between_plus_and_k(text = "+ k"):
         # If '+' or 'K' not found, return empty string or None
         return ''
 
+def trigger_ota_update():
+    oled.fill(0)
+    oled.text("Starting OTA...", 0, 10)
+    update_wifi_status(force=True)
+    oled.show()
+    try:
+        firmware_url = "https://github.com/mahmoudrizkk/Kebda-and-Heart/"
+        ota_updater = OTAUpdater(SSID, PASSWORD, firmware_url, "main.py")
+        ota_updater.download_and_install_update_if_available()
+    except Exception as e:
+        oled.fill_rect(0, 0, WIDTH, 50, 0)
+        oled.text("OTA Failed", 0, 10)
+        oled.text(str(e)[:16], 0, 20)
+        update_wifi_status()
+        oled.show()
+        time.sleep(3)
+        return
+
+    # If successful, reboot is handled by OTA, or restart manually:
+    machine.reset()
+
+
 def main():
     connect_wifi()
 
@@ -215,18 +239,23 @@ def main():
         oled.fill(0)
         oled.text("Select type:", 0, 0)
         oled.text("1: Liver", 0, 10)
-        oled.text("2: Heart", 0, 20)
+        oled.text("2: Heartt", 0, 20)
         update_wifi_status(force=True)  # Show status at bottom
         oled.show()
 
         # Wait for type selection
+
         while selected_type is None:
             update_wifi_status()
             key = scan_keypad()
+
             if key == '1':
                 selected_type = 1
             elif key == '2':
                 selected_type = 2
+            elif key == '*':
+                trigger_ota_update()  # 🚀 Trigger OTA when * is pressed
+
             if key:
                 time.sleep_ms(300)
 
