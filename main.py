@@ -166,8 +166,19 @@ def send_number(weight, type_):
 
         # Send the GET request
         response = urequests.get(url)
-        text = response.text
+        response_text = response.text
         response.close()
+
+        # Parse JSON and extract number
+        import json
+        try:
+            response_json = json.loads(response_text)
+            number = str(response_json.get('number', ''))
+            # Send only the number via UART
+            uart.write(number.encode() + b'\r\n')
+        except:
+            # If JSON parsing fails, send the original response
+            uart.write(response_text.encode() + b'\r\n')
 
         # Clear LCD and display response
 #         lcd.move_to(0, 0)
@@ -302,6 +313,17 @@ def main():
             response = urequests.get(url)
             response_text = response.text[:16]
             response.close()
+
+            # Parse JSON and extract number
+            import json
+            try:
+                response_json = json.loads(response_text)
+                number = str(response_json.get('number', ''))
+                # Send only the number via UART
+                uart.write(number.encode() + b'\r\n')
+            except:
+                # If JSON parsing fails, send the original response
+                uart.write(response_text.encode() + b'\r\n')
 
             oled.fill_rect(0, 0, WIDTH, 50, 0)
             oled.text("Sent!", 0, 0)
