@@ -244,6 +244,7 @@ def trigger_ota_update():
     oled.fill(0)
     oled.text("Enter Password:", 0, 0)
     oled.text("Press D to confirm", 0, 10)
+    oled.text("# to cancel", 0, 20)
     update_wifi_status(force=True)
     oled.show()
     
@@ -289,17 +290,25 @@ def trigger_ota_update():
                     oled.fill(0)
                     oled.text("Enter Password:", 0, 0)
                     oled.text("Press D to confirm", 0, 10)
+                    oled.text("# to cancel", 0, 20)
                     update_wifi_status()
                     oled.show()
-            elif key in '0123456789ABC#':
+            elif key == '#':  # Cancel
+                oled.fill(0)
+                oled.text("Update Cancelled", 0, 10)
+                update_wifi_status()
+                oled.show()
+                time.sleep(2)
+                return
+            elif key in '0123456789ABC':
                 password_buffer += key
-                oled.fill_rect(0, 20, WIDTH, 10, 0)
-                oled.text("*" * len(password_buffer), 0, 20)
+                oled.fill_rect(0, 30, WIDTH, 10, 0)
+                oled.text("*" * len(password_buffer), 0, 30)
                 oled.show()
             elif key == '*':  # Backspace
                 password_buffer = password_buffer[:-1]
-                oled.fill_rect(0, 20, WIDTH, 10, 0)
-                oled.text("*" * len(password_buffer), 0, 20)
+                oled.fill_rect(0, 30, WIDTH, 10, 0)
+                oled.text("*" * len(password_buffer), 0, 30)
                 oled.show()
             last_key = key
         elif not key:
