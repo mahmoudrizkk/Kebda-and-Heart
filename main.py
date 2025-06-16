@@ -356,7 +356,7 @@ def main():
 
         # Step 4: Restart
         oled.fill_rect(0, 0, WIDTH, 50, 0)
-        oled.text("Restarting...", 0, 0)
+        oled.text("Success!", 0, 0)
         update_wifi_status()
         oled.show()
         time.sleep(2)
