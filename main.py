@@ -257,7 +257,7 @@ def main():
         # Step 1: Prompt for type selection
         oled.fill(0)
         oled.text("Select type:", 0, 0)
-        oled.text("1: Liver", 0, 10)
+        oled.text("1: Liverr", 0, 10)
         oled.text("2: Heart", 0, 20)
         update_wifi_status(force=True)  # Show status at bottom
         oled.show()
