@@ -151,7 +151,7 @@ def scan_keypad():
 def send_number(weight, type_):
     #http://shatat-ue.runasp.net/api/Devices/VacuumOutput?weight=12&type=1&machineid=1
     #http://shatat-ue.runasp.net/api/Devices/MiscarriageItem?weight=2.5&type=1&machineid=1
-    url = f"http://shatat-ue.runasp.net/api/Devices/MiscarriageItem?weight={weight}&type={type_}&machineid=1"
+    url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber=12"
     
     try:
         update_wifi_status()
@@ -173,12 +173,23 @@ def send_number(weight, type_):
         import json
         try:
             response_json = json.loads(response_text)
-            number = str(response_json.get('number', ''))
-            # Send only the number via UART
-            uart.write(number.encode() + b'\r\n')
-        except:
-            # If JSON parsing fails, send the original response
-            uart.write(response_text.encode() + b'\r\n')
+            number = str(response_json.get('numberZ', ''))  # Use consistent field name
+            if not number:  # If number is empty
+                number = '0'  # Set a default value
+            oled.text(number, 0, 30)
+            oled.show()
+            # Send only the number via UART with consistent termination
+            uart.write(number.encode() + b'=\r\n')
+        except json.JSONDecodeError:
+            # Handle JSON parsing error
+            oled.text("JSON Error", 0, 30)
+            oled.show()
+            uart.write(b'ERROR=\r\n')
+        except Exception as e:
+            # Handle other errors
+            oled.text("Error", 0, 30)
+            oled.show()
+            uart.write(b'ERROR=\r\n')
 
         # Clear LCD and display response
 #         lcd.move_to(0, 0)
@@ -309,7 +320,7 @@ def main():
 
         # Step 3: Send to server and show response
         try:
-            url = f"http://shatat-ue.runasp.net/api/Devices/MiscarriageItem?weight={received_weight}&type={selected_type}&machineid=1"
+            url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber=12"
             response = urequests.get(url)
             response_text = response.text[:16]
             response.close()
@@ -318,17 +329,20 @@ def main():
             import json
             try:
                 response_json = json.loads(response_text)
-                number = str(response_json.get('number', ''))
+                number = str(response_json.get("numberZ", ''))
+#                 number = response_json.get("numberZ")
+                oled.text(number,0,30)
+                oled.show()
                 # Send only the number via UART
-                uart.write(number.encode() + b'\r\n')
+                uart.write(number.encode() + b'=\r\n')
             except:
                 # If JSON parsing fails, send the original response
                 uart.write(response_text.encode() + b'\r\n')
 
-            oled.fill_rect(0, 0, WIDTH, 50, 0)
-            oled.text("Sent!", 0, 0)
-            oled.text("Response:", 0, 10)
-            oled.text(response_text, 0, 20)
+#             oled.fill_rect(0, 0, WIDTH, 50, 0)
+#             oled.text("Sent!", 0, 0)
+#             oled.text("Response:", 0, 10)
+#             oled.text(response_text, 0, 20)
 
         except Exception as e:
             oled.fill_rect(0, 0, WIDTH, 50, 0)
