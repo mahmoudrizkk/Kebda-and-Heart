@@ -320,7 +320,7 @@ def main():
 
         # Step 3: Send to server and show response
         try:
-            url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber=12"
+            url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber=50"
             response = urequests.get(url)
             response_text = response.text[:16]
             response.close()
@@ -331,6 +331,7 @@ def main():
                 response_json = json.loads(response_text)
                 number = str(response_json.get("numberZ", ''))
 #                 number = response_json.get("numberZ")
+                oled.text("Number:",0,20)
                 oled.text(number,0,30)
                 oled.show()
                 # Send only the number via UART
