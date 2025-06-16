@@ -242,30 +242,70 @@ def extract_between_plus_and_k(text = "+ k"):
 
 def trigger_ota_update():
     oled.fill(0)
-    oled.text("Starting OTA...", 0, 10)
+    oled.text("Enter Password:", 0, 0)
+    oled.text("Press D to confirm", 0, 10)
     update_wifi_status(force=True)
     oled.show()
-    try:
-        firmware_url = "https://github.com/mahmoudrizkk/Kebda-and-Heart/"
-        ota_updater = OTAUpdater(SSID, PASSWORD, firmware_url, "main.py")
-        ota_updater.download_and_install_update_if_available()
-        oled.fill_rect(0, 0, WIDTH, 50, 0)
-        oled.text("OTA Success", 0, 10)
-        oled.text(str(e)[:16], 0, 20)
+    
+    password_buffer = ""
+    last_key = None
+    
+    while True:
         update_wifi_status()
-        oled.show()
-        time.sleep(3)
-    except Exception as e:
-        oled.fill_rect(0, 0, WIDTH, 50, 0)
-        oled.text("OTA Failed", 0, 10)
-        oled.text(str(e)[:16], 0, 20)
-        update_wifi_status()
-        oled.show()
-        time.sleep(3)
-        return
-
-    # If successful, reboot is handled by OTA, or restart manually:
-    machine.reset()
+        key = scan_keypad()
+        
+        if key and key != last_key:
+            if key == 'D':  # ENTER
+                if password_buffer == "1234":  # You can change this password
+                    oled.fill(0)
+                    oled.text("Starting OTA...", 0, 10)
+                    update_wifi_status(force=True)
+                    oled.show()
+                    try:
+                        firmware_url = "https://github.com/mahmoudrizkk/Kebda-and-Heart/"
+                        ota_updater = OTAUpdater(SSID, PASSWORD, firmware_url, "main.py")
+                        ota_updater.download_and_install_update_if_available()
+                        oled.fill_rect(0, 0, WIDTH, 50, 0)
+                        oled.text("OTA Success", 0, 10)
+                        update_wifi_status()
+                        oled.show()
+                        time.sleep(3)
+                    except Exception as e:
+                        oled.fill_rect(0, 0, WIDTH, 50, 0)
+                        oled.text("OTA Failed", 0, 10)
+                        oled.text(str(e)[:16], 0, 20)
+                        update_wifi_status()
+                        oled.show()
+                        time.sleep(3)
+                    return
+                else:
+                    oled.fill(0)
+                    oled.text("Wrong Password!", 0, 10)
+                    oled.text("Try Again", 0, 20)
+                    update_wifi_status()
+                    oled.show()
+                    time.sleep(2)
+                    password_buffer = ""
+                    oled.fill(0)
+                    oled.text("Enter Password:", 0, 0)
+                    oled.text("Press D to confirm", 0, 10)
+                    update_wifi_status()
+                    oled.show()
+            elif key in '0123456789ABC#':
+                password_buffer += key
+                oled.fill_rect(0, 20, WIDTH, 10, 0)
+                oled.text("*" * len(password_buffer), 0, 20)
+                oled.show()
+            elif key == '*':  # Backspace
+                password_buffer = password_buffer[:-1]
+                oled.fill_rect(0, 20, WIDTH, 10, 0)
+                oled.text("*" * len(password_buffer), 0, 20)
+                oled.show()
+            last_key = key
+        elif not key:
+            last_key = None
+        
+        time.sleep_ms(100)
 
 
 def main():
