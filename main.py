@@ -19,12 +19,13 @@ i2c = I2C(0, scl=Pin(5), sda=Pin(4), freq=400000)
 lcd = I2cLcd(i2c, I2C_ADDR, I2C_NUM_ROWS, I2C_NUM_COLS)
 
 # Initialize LCD with welcome message
-lcd.clear()
+lcd.move_to(0, 0)
 lcd.putstr("Kebda & Heart")
 lcd.move_to(1, 0)
-lcd.putstr("System Ready")
+lcd.putstr("                ")  # Clear second row for WiFi status
 time.sleep(2)
-lcd.clear()
+lcd.move_to(0, 0)
+lcd.putstr("                ")  # Clear first row
 
 # Comment out OLED setup
 # WIDTH = 128
@@ -36,8 +37,8 @@ SSID = "POCO"
 PASSWORD = "qwerty123"
 
 # Keypad 4x4
-ROW_PINS = [6, 7, 8, 9]
-COL_PINS = [10, 11, 12, 13]
+COL_PINS = [6, 7, 8, 9]
+ROW_PINS = [10, 11, 12, 13]
 KEYS = [
     ['1', '4', '7', '*'],
     ['2', '5', '8', '0'],
@@ -75,7 +76,7 @@ def update_wifi_status(force=False):
         wlan.connect(SSID, PASSWORD)
         retries = 10
         while not wlan.isconnected() and retries > 0:
-            lcd.clear()
+            lcd.move_to(1, 0)
             lcd.putstr("WiFi: Reconnecting")
             time.sleep(0.5)
             retries -= 1
@@ -83,11 +84,13 @@ def update_wifi_status(force=False):
     # Update status on LCD
     status = wlan.isconnected()
     if force or status != last_status:
+        lcd.move_to(1, 0)
+        lcd.putstr("                ")  # Clear second row
         if status:
-            lcd.clear()
+            lcd.move_to(1, 0)
             lcd.putstr("WiFi: Connected")
         else:
-            lcd.clear()
+            lcd.move_to(1, 0)
             lcd.putstr("WiFi: Disconn.")
         last_status = status
 
@@ -162,10 +165,12 @@ def send_number(weight, type_):
         update_wifi_status()
         
         # Show sending info
-        lcd.clear()
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
         lcd.putstr("Sending:")
-        lcd.move_to(1, 0)
-        lcd.putstr(str(weight))
+        lcd.move_to(0, 8)
+        lcd.putstr(str(weight)[:8])
 
         # Send the GET request
         response = urequests.get(url)
@@ -179,37 +184,48 @@ def send_number(weight, type_):
             number = str(response_json.get('numberZ', ''))  # Use consistent field name
             if not number:  # If number is empty
                 number = '0'  # Set a default value
-            lcd.clear()
+            lcd.move_to(0, 0)
+            lcd.putstr("                ")  # Clear first row
+            lcd.move_to(0, 0)
             lcd.putstr("Number:")
-            lcd.move_to(1, 0)
-            lcd.putstr(number)
+            lcd.move_to(0, 7)
+            lcd.putstr(number[:9])
             # Send only the number via UART with consistent termination
             uart.write(number.encode() + b'=\r\n')
         except json.JSONDecodeError:
             # Handle JSON parsing error
-            lcd.clear()
+            lcd.move_to(0, 0)
+            lcd.putstr("                ")  # Clear first row
+            lcd.move_to(0, 0)
             lcd.putstr("JSON Error")
             uart.write(b'ERROR=\r\n')
         except Exception as e:
             # Handle other errors
-            lcd.clear()
+            lcd.move_to(0, 0)
+            lcd.putstr("                ")  # Clear first row
+            lcd.move_to(0, 0)
             lcd.putstr("Error")
             uart.write(b'ERROR=\r\n')
 
         # Clear LCD and display response
-        lcd.clear()
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
         lcd.putstr("Response:")
-        lcd.move_to(1, 0)
-        lcd.putstr(response_text[:16])
+        lcd.move_to(0, 9)
+        lcd.putstr(response_text[:7])
         time.sleep(3)
-        lcd.clear()
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
 
     except Exception as e:
         # Display error message
-        lcd.clear()
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
         lcd.putstr("Send failed:")
-        lcd.move_to(1, 0)
-        lcd.putstr(str(e)[:16])
+        lcd.move_to(0, 11)
+        lcd.putstr(str(e)[:5])
         time.sleep(2)
 
 
@@ -244,10 +260,12 @@ def extract_between_plus_and_k(text = "+ k"):
         return ''
 
 def trigger_ota_update():
-    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr("                ")  # Clear first row
+    lcd.move_to(0, 0)
     lcd.putstr("Enter Password:")
-    lcd.move_to(1, 0)
-    lcd.putstr("D=confirm #=cancel")
+    lcd.move_to(0, 15)
+    lcd.putstr("*")
     
     password_buffer = ""
     last_key = None
@@ -259,54 +277,70 @@ def trigger_ota_update():
         if key and key != last_key:
             if key == 'D':  # ENTER
                 if password_buffer == "1234":  # You can change this password
-                    lcd.clear()
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
                     lcd.putstr("Starting OTA...")
                     try:
                         firmware_url = "https://github.com/mahmoudrizkk/Kebda-and-Heart/"
                         ota_updater = OTAUpdater(SSID, PASSWORD, firmware_url, "main.py")
                         ota_updater.download_and_install_update_if_available()
-                        lcd.clear()
+                        lcd.move_to(0, 0)
+                        lcd.putstr("                ")  # Clear first row
+                        lcd.move_to(0, 0)
                         lcd.putstr("OTA Success")
                         time.sleep(3)
                     except Exception as e:
-                        lcd.clear()
+                        lcd.move_to(0, 0)
+                        lcd.putstr("                ")  # Clear first row
+                        lcd.move_to(0, 0)
                         lcd.putstr("OTA Failed")
-                        lcd.move_to(1, 0)
-                        lcd.putstr(str(e)[:16])
+                        lcd.move_to(0, 10)
+                        lcd.putstr(str(e)[:6])
                         time.sleep(3)
                     return
                 else:
-                    lcd.clear()
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
                     lcd.putstr("Wrong Password!")
-                    lcd.move_to(1, 0)
-                    lcd.putstr("Try Again")
                     time.sleep(2)
                     password_buffer = ""
-                    lcd.clear()
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
                     lcd.putstr("Enter Password:")
-                    lcd.move_to(1, 0)
-                    lcd.putstr("D=confirm #=cancel")
+                    lcd.move_to(0, 15)
+                    lcd.putstr("*")
             elif key == '#':  # Cancel
-                lcd.clear()
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
                 lcd.putstr("Update Cancelled")
                 time.sleep(2)
-                lcd.clear()
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
                 lcd.putstr("Select type:")
-                lcd.move_to(1, 0)
-                lcd.putstr("1:Liver 2:Heart")
+                lcd.move_to(0, 8)
+                lcd.putstr("1:L 2:H")
                 return
             elif key in '0123456789ABC':
                 password_buffer += key
-                lcd.clear()
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
                 lcd.putstr("Enter Password:")
-                lcd.move_to(1, 0)
-                lcd.putstr("*" * len(password_buffer))
+                lcd.move_to(0, 15)
+                lcd.putstr("*" * min(len(password_buffer), 1))
             elif key == '*':  # Backspace
                 password_buffer = password_buffer[:-1]
-                lcd.clear()
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
                 lcd.putstr("Enter Password:")
-                lcd.move_to(1, 0)
-                lcd.putstr("*" * len(password_buffer))
+                lcd.move_to(0, 15)
+                lcd.putstr("*" * min(len(password_buffer), 1))
             last_key = key
         elif not key:
             last_key = None
@@ -323,11 +357,13 @@ def main():
         last_key = None
 
         # Step 1: Prompt for type selection
-        lcd.clear()
-        lcd.putstr("Select type:")
-        lcd.move_to(1, 0)
-        lcd.putstr("1:Liver 2:Heart")
         update_wifi_status(force=True)
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
+        lcd.putstr("Select type:")
+        lcd.move_to(0, 8)
+        lcd.putstr("1:L 2:H")
 
         # Wait for type selection
         while selected_type is None:
@@ -344,13 +380,17 @@ def main():
             if key:
                 time.sleep_ms(300)
 
-        lcd.clear()
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
         lcd.putstr("Selected:")
-        lcd.move_to(1, 0)
+        lcd.move_to(0, 9)
         lcd.putstr("Liver" if selected_type == 1 else "Heart")
         time.sleep(1)
         
-        lcd.clear()
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
         lcd.putstr("Waiting weight...")
         update_wifi_status()
 
@@ -358,10 +398,12 @@ def main():
         # received_weight = receive_number()
         received_weight = "5078"  # For testing
 
-        lcd.clear()
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
         lcd.putstr("Weight:")
-        lcd.move_to(1, 0)
-        lcd.putstr(received_weight[:16])
+        lcd.move_to(0, 7)
+        lcd.putstr(received_weight[:9])
         update_wifi_status()
         time.sleep(1)
 
@@ -377,31 +419,39 @@ def main():
             try:
                 response_json = json.loads(response_text)
                 number = str(response_json.get("numberZ", ''))
-                lcd.clear()
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
                 lcd.putstr("Number:")
-                lcd.move_to(1, 0)
-                lcd.putstr(number)
+                lcd.move_to(0, 7)
+                lcd.putstr(number[:9])
                 # Send only the number via UART
                 uart.write(number.encode() + b'=\r\n')
             except:
                 # If JSON parsing fails, send the original response
-                lcd.clear()
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
                 lcd.putstr("Response:")
-                lcd.move_to(1, 0)
-                lcd.putstr(response_text[:16])
+                lcd.move_to(0, 9)
+                lcd.putstr(response_text[:7])
                 uart.write(response_text.encode() + b'\r\n')
 
         except Exception as e:
-            lcd.clear()
-            lcd.putstr("Error sending")
-            lcd.move_to(1, 0)
-            lcd.putstr(str(e)[:16])
+            lcd.move_to(0, 0)
+            lcd.putstr("                ")  # Clear first row
+            lcd.move_to(0, 0)
+            lcd.putstr("Error:")
+            lcd.move_to(0, 6)
+            lcd.putstr(str(e)[:10])
 
         update_wifi_status()
         time.sleep(3)
 
         # Step 4: Restart
-        lcd.clear()
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
         lcd.putstr("Success!")
         update_wifi_status()
         time.sleep(2)
