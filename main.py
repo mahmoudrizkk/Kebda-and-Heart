@@ -361,7 +361,7 @@ def main():
         lcd.move_to(0, 0)
         lcd.putstr("                ")  # Clear first row
         lcd.move_to(0, 0)
-        lcd.putstr("Select type:")
+        lcd.putstr("Select:")
         lcd.move_to(0, 8)
         lcd.putstr("1:L 2:H")
 
