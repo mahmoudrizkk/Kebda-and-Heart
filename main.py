@@ -2,28 +2,34 @@ import network
 import machine
 import time
 import urequests
-from ssd1306 import SSD1306_I2C
+# from ssd1306 import SSD1306_I2C  # Commented out OLED
 from ota import OTAUpdater
 from WIFI_CONFIG import SSID, PASSWORD
 
 from machine import I2C, Pin
 from i2c_lcd import I2cLcd
 
-# OLED size
-WIDTH = 128
-HEIGHT = 64
-
-I2C_ADDR = 0x27
+# LCD configuration
+I2C_ADDR = 0x27  # Default I2C address for PCF8574
 I2C_NUM_ROWS = 2
 I2C_NUM_COLS = 16
 
-# I2C & OLED init
-i2c = machine.I2C(0, scl=machine.Pin(5), sda=machine.Pin(4), freq=400000)
-oled = SSD1306_I2C(WIDTH, HEIGHT, i2c)
-# i2c = I2C(0, scl=Pin(5), sda=Pin(4), freq=400000)
-# devices = i2c.scan()
-# print("I2C devices found:", devices)
-# lcd = I2cLcd(i2c, I2C_ADDR, I2C_NUM_ROWS, I2C_NUM_COLS)
+# I2C & LCD init
+i2c = I2C(0, scl=Pin(5), sda=Pin(4), freq=400000)
+lcd = I2cLcd(i2c, I2C_ADDR, I2C_NUM_ROWS, I2C_NUM_COLS)
+
+# Initialize LCD with welcome message
+lcd.clear()
+lcd.putstr("Kebda & Heart")
+lcd.move_to(1, 0)
+lcd.putstr("System Ready")
+time.sleep(2)
+lcd.clear()
+
+# Comment out OLED setup
+# WIDTH = 128
+# HEIGHT = 64
+# oled = SSD1306_I2C(WIDTH, HEIGHT, i2c)
 
 # Wi-Fi credentials
 SSID = "POCO"
@@ -69,21 +75,20 @@ def update_wifi_status(force=False):
         wlan.connect(SSID, PASSWORD)
         retries = 10
         while not wlan.isconnected() and retries > 0:
-            oled.fill_rect(0, 50, WIDTH, 14, 0)
-            oled.text("WiFi: Reconnecting", 0, 50)
-            oled.show()
+            lcd.clear()
+            lcd.putstr("WiFi: Reconnecting")
             time.sleep(0.5)
             retries -= 1
 
-    # Update status on OLED
+    # Update status on LCD
     status = wlan.isconnected()
     if force or status != last_status:
-        oled.fill_rect(0, 50, WIDTH, 14, 0)
         if status:
-            oled.text("WiFi: Connected", 0, 50)
+            lcd.clear()
+            lcd.putstr("WiFi: Connected")
         else:
-            oled.text("WiFi: Failed     ", 0, 50)
-        oled.show()
+            lcd.clear()
+            lcd.putstr("WiFi: Disconn.")
         last_status = status
 
 
@@ -156,13 +161,11 @@ def send_number(weight, type_):
     try:
         update_wifi_status()
         
-        # Clear LCD first line
-#         lcd.move_to(0, 0)
-#         lcd.putstr(" " * 16)
-        
         # Show sending info
-#         lcd.move_to(0, 0)
-#         lcd.putstr(f"Sending:{weight}")
+        lcd.clear()
+        lcd.putstr("Sending:")
+        lcd.move_to(1, 0)
+        lcd.putstr(str(weight))
 
         # Send the GET request
         response = urequests.get(url)
@@ -176,37 +179,37 @@ def send_number(weight, type_):
             number = str(response_json.get('numberZ', ''))  # Use consistent field name
             if not number:  # If number is empty
                 number = '0'  # Set a default value
-            oled.text(number, 0, 30)
-            oled.show()
+            lcd.clear()
+            lcd.putstr("Number:")
+            lcd.move_to(1, 0)
+            lcd.putstr(number)
             # Send only the number via UART with consistent termination
             uart.write(number.encode() + b'=\r\n')
         except json.JSONDecodeError:
             # Handle JSON parsing error
-            oled.text("JSON Error", 0, 30)
-            oled.show()
+            lcd.clear()
+            lcd.putstr("JSON Error")
             uart.write(b'ERROR=\r\n')
         except Exception as e:
             # Handle other errors
-            oled.text("Error", 0, 30)
-            oled.show()
+            lcd.clear()
+            lcd.putstr("Error")
             uart.write(b'ERROR=\r\n')
 
         # Clear LCD and display response
-#         lcd.move_to(0, 0)
-#         lcd.putstr(" " * 16)
-#         lcd.move_to(0, 0)
-#         lcd.putstr("Response:" + text[:16])
-        oled.text(text[:16],0,30)
-        oled.show()
+        lcd.clear()
+        lcd.putstr("Response:")
+        lcd.move_to(1, 0)
+        lcd.putstr(response_text[:16])
         time.sleep(3)
-        oled.fill_rect(0, 10, WIDTH, 54, 0)
+        lcd.clear()
 
     except Exception as e:
         # Display error message
-#         lcd.move_to(0, 0)
-#         lcd.putstr(" " * 16)
-#         lcd.move_to(0, 0)
-#         lcd.putstr("Send failed:" + str(e)[:16])
+        lcd.clear()
+        lcd.putstr("Send failed:")
+        lcd.move_to(1, 0)
+        lcd.putstr(str(e)[:16])
         time.sleep(2)
 
 
@@ -241,12 +244,10 @@ def extract_between_plus_and_k(text = "+ k"):
         return ''
 
 def trigger_ota_update():
-    oled.fill(0)
-    oled.text("Enter Password:", 0, 0)
-    oled.text("Press D to confirm", 0, 10)
-    oled.text("# to cancel", 0, 20)
-    update_wifi_status(force=True)
-    oled.show()
+    lcd.clear()
+    lcd.putstr("Enter Password:")
+    lcd.move_to(1, 0)
+    lcd.putstr("D=confirm #=cancel")
     
     password_buffer = ""
     last_key = None
@@ -258,64 +259,54 @@ def trigger_ota_update():
         if key and key != last_key:
             if key == 'D':  # ENTER
                 if password_buffer == "1234":  # You can change this password
-                    oled.fill(0)
-                    oled.text("Starting OTA...", 0, 10)
-                    update_wifi_status(force=True)
-                    oled.show()
+                    lcd.clear()
+                    lcd.putstr("Starting OTA...")
                     try:
                         firmware_url = "https://github.com/mahmoudrizkk/Kebda-and-Heart/"
                         ota_updater = OTAUpdater(SSID, PASSWORD, firmware_url, "main.py")
                         ota_updater.download_and_install_update_if_available()
-                        oled.fill_rect(0, 0, WIDTH, 50, 0)
-                        oled.text("OTA Success", 0, 10)
-                        update_wifi_status()
-                        oled.show()
+                        lcd.clear()
+                        lcd.putstr("OTA Success")
                         time.sleep(3)
                     except Exception as e:
-                        oled.fill_rect(0, 0, WIDTH, 50, 0)
-                        oled.text("OTA Failed", 0, 10)
-                        oled.text(str(e)[:16], 0, 20)
-                        update_wifi_status()
-                        oled.show()
+                        lcd.clear()
+                        lcd.putstr("OTA Failed")
+                        lcd.move_to(1, 0)
+                        lcd.putstr(str(e)[:16])
                         time.sleep(3)
                     return
                 else:
-                    oled.fill(0)
-                    oled.text("Wrong Password!", 0, 10)
-                    oled.text("Try Again", 0, 20)
-                    update_wifi_status()
-                    oled.show()
+                    lcd.clear()
+                    lcd.putstr("Wrong Password!")
+                    lcd.move_to(1, 0)
+                    lcd.putstr("Try Again")
                     time.sleep(2)
                     password_buffer = ""
-                    oled.fill(0)
-                    oled.text("Enter Password:", 0, 0)
-                    oled.text("Press D to confirm", 0, 10)
-                    oled.text("# to cancel", 0, 20)
-                    update_wifi_status()
-                    oled.show()
+                    lcd.clear()
+                    lcd.putstr("Enter Password:")
+                    lcd.move_to(1, 0)
+                    lcd.putstr("D=confirm #=cancel")
             elif key == '#':  # Cancel
-                oled.fill(0)
-                oled.text("Update Cancelled", 0, 10)
-                update_wifi_status()
-                oled.show()
+                lcd.clear()
+                lcd.putstr("Update Cancelled")
                 time.sleep(2)
-                oled.fill(0)
-                oled.text("Select type:", 0, 0)
-                oled.text("1: Liver", 0, 10)
-                oled.text("2: Heart", 0, 20)
-                update_wifi_status(force=True)  # Show status at bottom
-                oled.show()
+                lcd.clear()
+                lcd.putstr("Select type:")
+                lcd.move_to(1, 0)
+                lcd.putstr("1:Liver 2:Heart")
                 return
             elif key in '0123456789ABC':
                 password_buffer += key
-                oled.fill_rect(0, 30, WIDTH, 10, 0)
-                oled.text("*" * len(password_buffer), 0, 30)
-                oled.show()
+                lcd.clear()
+                lcd.putstr("Enter Password:")
+                lcd.move_to(1, 0)
+                lcd.putstr("*" * len(password_buffer))
             elif key == '*':  # Backspace
                 password_buffer = password_buffer[:-1]
-                oled.fill_rect(0, 30, WIDTH, 10, 0)
-                oled.text("*" * len(password_buffer), 0, 30)
-                oled.show()
+                lcd.clear()
+                lcd.putstr("Enter Password:")
+                lcd.move_to(1, 0)
+                lcd.putstr("*" * len(password_buffer))
             last_key = key
         elif not key:
             last_key = None
@@ -332,15 +323,13 @@ def main():
         last_key = None
 
         # Step 1: Prompt for type selection
-        oled.fill(0)
-        oled.text("Select type:", 0, 0)
-        oled.text("1: Liver", 0, 10)
-        oled.text("2: Heart", 0, 20)
-        update_wifi_status(force=True)  # Show status at bottom
-        oled.show()
+        lcd.clear()
+        lcd.putstr("Select type:")
+        lcd.move_to(1, 0)
+        lcd.putstr("1:Liver 2:Heart")
+        update_wifi_status(force=True)
 
         # Wait for type selection
-
         while selected_type is None:
             update_wifi_status()
             key = scan_keypad()
@@ -355,29 +344,32 @@ def main():
             if key:
                 time.sleep_ms(300)
 
-        oled.fill_rect(0, 0, WIDTH, 50, 0)
-        oled.text("Selected:", 0, 0)
-        oled.text("Liver" if selected_type == 1 else "Kebda", 0, 10)
-        oled.text("Waiting weight...", 0, 30)
+        lcd.clear()
+        lcd.putstr("Selected:")
+        lcd.move_to(1, 0)
+        lcd.putstr("Liver" if selected_type == 1 else "Heart")
+        time.sleep(1)
+        
+        lcd.clear()
+        lcd.putstr("Waiting weight...")
         update_wifi_status()
-        oled.show()
 
         # Step 2: Receive weight from UART
-#         received_weight = receive_number()
-        received_weight = "13254"
+        # received_weight = receive_number()
+        received_weight = "5078"  # For testing
 
-        oled.fill_rect(0, 0, WIDTH, 50, 0)
-        oled.text("Weight:", 0, 0)
-        oled.text(received_weight[:16], 0, 10)
+        lcd.clear()
+        lcd.putstr("Weight:")
+        lcd.move_to(1, 0)
+        lcd.putstr(received_weight[:16])
         update_wifi_status()
-        oled.show()
         time.sleep(1)
 
         # Step 3: Send to server and show response
         try:
             url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber=50"
             response = urequests.get(url)
-            response_text = response.text[:16]
+            response_text = response.text
             response.close()
 
             # Parse JSON and extract number
@@ -385,35 +377,33 @@ def main():
             try:
                 response_json = json.loads(response_text)
                 number = str(response_json.get("numberZ", ''))
-#                 number = response_json.get("numberZ")
-                oled.text("Number:",0,20)
-                oled.text(number,0,30)
-                oled.show()
+                lcd.clear()
+                lcd.putstr("Number:")
+                lcd.move_to(1, 0)
+                lcd.putstr(number)
                 # Send only the number via UART
                 uart.write(number.encode() + b'=\r\n')
             except:
                 # If JSON parsing fails, send the original response
+                lcd.clear()
+                lcd.putstr("Response:")
+                lcd.move_to(1, 0)
+                lcd.putstr(response_text[:16])
                 uart.write(response_text.encode() + b'\r\n')
 
-#             oled.fill_rect(0, 0, WIDTH, 50, 0)
-#             oled.text("Sent!", 0, 0)
-#             oled.text("Response:", 0, 10)
-#             oled.text(response_text, 0, 20)
-
         except Exception as e:
-            oled.fill_rect(0, 0, WIDTH, 50, 0)
-            oled.text("Error sending", 0, 0)
-            oled.text(str(e)[:16], 0, 10)
+            lcd.clear()
+            lcd.putstr("Error sending")
+            lcd.move_to(1, 0)
+            lcd.putstr(str(e)[:16])
 
         update_wifi_status()
-        oled.show()
         time.sleep(3)
 
         # Step 4: Restart
-        oled.fill_rect(0, 0, WIDTH, 50, 0)
-        oled.text("Success!", 0, 0)
+        lcd.clear()
+        lcd.putstr("Success!")
         update_wifi_status()
-        oled.show()
         time.sleep(2)
 
 
