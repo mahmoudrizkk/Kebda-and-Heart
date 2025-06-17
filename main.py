@@ -426,7 +426,7 @@ def main():
                 lcd.move_to(0, 7)
                 lcd.putstr(number[:9])
                 # Send only the number via UART
-                uart.write(number.encode() + b'=\r\n')
+                uart.write(number.encode() + b'=')
             except:
                 # If JSON parsing fails, send the original response
                 lcd.move_to(0, 0)
