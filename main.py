@@ -367,7 +367,7 @@ def get_last_barcode(selected_type):
     """
     Call the LastBarcodeForLiverAndHeart API to get the last barcode for the selected type
     """
-    url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber={selected_type}"
+    url = f"http://shatat-ue.runasp.net/api/Devices/LastBarcodeForLiverAndHeart?type={selected_type}"
     
     try:
         update_wifi_status()
@@ -386,7 +386,7 @@ def get_last_barcode(selected_type):
         # Parse JSON and extract barcode
         try:
             response_json = json.loads(response_text)
-            barcode = str(response_json.get('numberZ', ''))
+            barcode = str(response_json.get('message', ''))
             
             if barcode:
                 lcd.move_to(0, 0)
