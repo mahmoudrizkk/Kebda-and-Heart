@@ -156,77 +156,77 @@ def scan_keypad():
 #         time.sleep(2)
 
 
-def send_number(weight, type_):
-    #http://shatat-ue.runasp.net/api/Devices/VacuumOutput?weight=12&type=1&machineid=1
-    #http://shatat-ue.runasp.net/api/Devices/MiscarriageItem?weight=2.5&type=1&machineid=1
-    url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber=12"
+# def send_number(weight, type_):
+#     #http://shatat-ue.runasp.net/api/Devices/VacuumOutput?weight=12&type=1&machineid=1
+#     #http://shatat-ue.runasp.net/api/Devices/MiscarriageItem?weight=2.5&type=1&machineid=1
+#     url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber=12"
     
-    try:
-        update_wifi_status()
+#     try:
+#         update_wifi_status()
         
-        # Show sending info
-        lcd.move_to(0, 0)
-        lcd.putstr("                ")  # Clear first row
-        lcd.move_to(0, 0)
-        lcd.putstr("Sending:")
-        lcd.move_to(0, 8)
-        lcd.putstr(str(weight)[:8])
+#         # Show sending info
+#         lcd.move_to(0, 0)
+#         lcd.putstr("                ")  # Clear first row
+#         lcd.move_to(0, 0)
+#         lcd.putstr("Sending:")
+#         lcd.move_to(0, 8)
+#         lcd.putstr(str(weight)[:8])
 
-        # Send the GET request
-        response = urequests.get(url)
-        response_text = response.text
-        response.close()
+#         # Send the GET request
+#         response = urequests.get(url)
+#         response_text = response.text
+#         response.close()
 
-        # Parse JSON and extract number
-        import json
-        try:
-            response_json = json.loads(response_text)
-            number = str(response_json.get('numberZ', ''))  # Use consistent field name
-            if not number:  # If number is empty
-                number = '0'  # Set a default value
-            lcd.move_to(0, 0)
-            lcd.putstr("                ")  # Clear first row
-            lcd.move_to(0, 0)
-            lcd.putstr("Number:")
-            lcd.move_to(0, 7)
-            lcd.putstr(number[:9])
-            # Send only the number via UART with consistent termination
-            uart.write(number.encode() + b'=\r\n')
-        except json.JSONDecodeError:
-            # Handle JSON parsing error
-            lcd.move_to(0, 0)
-            lcd.putstr("                ")  # Clear first row
-            lcd.move_to(0, 0)
-            lcd.putstr("JSON Error")
-            uart.write(b'ERROR=\r\n')
-        except Exception as e:
-            # Handle other errors
-            lcd.move_to(0, 0)
-            lcd.putstr("                ")  # Clear first row
-            lcd.move_to(0, 0)
-            lcd.putstr("Error")
-            uart.write(b'ERROR=\r\n')
+#         # Parse JSON and extract number
+#         import json
+#         try:
+#             response_json = json.loads(response_text)
+#             number = str(response_json.get('numberZ', ''))  # Use consistent field name
+#             if not number:  # If number is empty
+#                 number = '0'  # Set a default value
+#             lcd.move_to(0, 0)
+#             lcd.putstr("                ")  # Clear first row
+#             lcd.move_to(0, 0)
+#             lcd.putstr("Number:")
+#             lcd.move_to(0, 7)
+#             lcd.putstr(number[:9])
+#             # Send only the number via UART with consistent termination
+#             uart.write(number.encode() + b'=\r\n')
+#         except json.JSONDecodeError:
+#             # Handle JSON parsing error
+#             lcd.move_to(0, 0)
+#             lcd.putstr("                ")  # Clear first row
+#             lcd.move_to(0, 0)
+#             lcd.putstr("JSON Error")
+#             uart.write(b'ERROR=\r\n')
+#         except Exception as e:
+#             # Handle other errors
+#             lcd.move_to(0, 0)
+#             lcd.putstr("                ")  # Clear first row
+#             lcd.move_to(0, 0)
+#             lcd.putstr("Error")
+#             uart.write(b'ERROR=\r\n')
 
-        # Clear LCD and display response
-        lcd.move_to(0, 0)
-        lcd.putstr("                ")  # Clear first row
-        lcd.move_to(0, 0)
-        lcd.putstr("Response:")
-        lcd.move_to(0, 9)
-        lcd.putstr(response_text[:7])
-        time.sleep(3)
-        lcd.move_to(0, 0)
-        lcd.putstr("                ")  # Clear first row
+#         # Clear LCD and display response
+#         lcd.move_to(0, 0)
+#         lcd.putstr("                ")  # Clear first row
+#         lcd.move_to(0, 0)
+#         lcd.putstr("Response:")
+#         lcd.move_to(0, 9)
+#         lcd.putstr(response_text[:7])
+#         time.sleep(3)
+#         lcd.move_to(0, 0)
+#         lcd.putstr("                ")  # Clear first row
 
-    except Exception as e:
-        # Display error message
-        lcd.move_to(0, 0)
-        lcd.putstr("                ")  # Clear first row
-        lcd.move_to(0, 0)
-        lcd.putstr("Send failed:")
-        lcd.move_to(0, 11)
-        lcd.putstr(str(e)[:5])
-        time.sleep(2)
+#     except Exception as e:
+#         # Display error message
+#         lcd.move_to(0, 0)
+#         lcd.putstr("                ")  # Clear first row
+#         lcd.move_to(0, 0)
+#         lcd.putstr("Send failed:")
+#         lcd.move_to(0, 11)
+#         lcd.putstr(str(e)[:5])
+#         time.sleep(2)
 
 
 def flush_uart():
@@ -348,6 +348,137 @@ def trigger_ota_update():
         time.sleep_ms(100)
 
 
+def get_last_barcode(selected_type):
+    """
+    Call the LastBarcodeForLiverAndHeart API to get the last barcode for the selected type
+    """
+    url = f"http://shatat-ue.runasp.net/api/Devices/LastBarcodeForLiverAndHeart?type={selected_type}"
+    
+    try:
+        update_wifi_status()
+        
+        # Show sending info
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
+        lcd.putstr("Getting barcode...")
+
+        # Send the GET request
+        response = urequests.get(url)
+        response_text = response.text
+        response.close()
+
+        # Parse JSON and extract barcode
+        import json
+        try:
+            response_json = json.loads(response_text)
+            barcode = str(response_json.get('message', ''))
+            
+            if barcode:
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
+                lcd.putstr("Barcode:")
+                lcd.move_to(0, 8)
+                lcd.putstr(barcode[:8])
+                
+                # Send the barcode via UART
+                uart.write(barcode.encode() + b'=\r\n')
+                
+                time.sleep(3)
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
+                lcd.putstr("Barcode sent!")
+            else:
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(0, 0)
+                lcd.putstr("No barcode found")
+                uart.write(b'NO_BARCODE=\r\n')
+                
+        except json.JSONDecodeError:
+            # Handle JSON parsing error
+            lcd.move_to(0, 0)
+            lcd.putstr("                ")  # Clear first row
+            lcd.move_to(0, 0)
+            lcd.putstr("JSON Error")
+            uart.write(b'ERROR=\r\n')
+        except Exception as e:
+            # Handle other errors
+            lcd.move_to(0, 0)
+            lcd.putstr("                ")  # Clear first row
+            lcd.move_to(0, 0)
+            lcd.putstr("Error")
+            uart.write(b'ERROR=\r\n')
+
+        time.sleep(2)
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+
+    except Exception as e:
+        # Display error message
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(0, 0)
+        lcd.putstr("Get failed:")
+        lcd.move_to(0, 11)
+        lcd.putstr(str(e)[:5])
+        time.sleep(2)
+
+
+def trigger_barcode_request():
+    """
+    Handle B button press - ask for type and get last barcode
+    """
+    lcd.move_to(0, 0)
+    lcd.putstr("                ")  # Clear first row
+    lcd.move_to(0, 0)
+    lcd.putstr("Get Last Barcode")
+    lcd.move_to(1, 0)
+    lcd.putstr("Select: 1:L 2:H")
+    
+    selected_type = None
+    last_key = None
+    
+    while selected_type is None:
+        update_wifi_status()
+        key = scan_keypad()
+        
+        if key and key != last_key:
+            if key == '1':
+                selected_type = 1
+            elif key == '2':
+                selected_type = 2
+            elif key == '#':  # Cancel
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(1, 0)
+                lcd.putstr("                ")  # Clear second row
+                lcd.move_to(0, 0)
+                lcd.putstr("Cancelled")
+                time.sleep(2)
+                return
+            last_key = key
+        elif not key:
+            last_key = None
+        
+        time.sleep_ms(100)
+    
+    if selected_type:
+        lcd.move_to(0, 0)
+        lcd.putstr("                ")  # Clear first row
+        lcd.move_to(1, 0)
+        lcd.putstr("                ")  # Clear second row
+        lcd.move_to(0, 0)
+        lcd.putstr("Type:")
+        lcd.move_to(0, 5)
+        lcd.putstr("Liver" if selected_type == 1 else "Heart")
+        time.sleep(1)
+        
+        get_last_barcode(selected_type)
+
+
 def main():
     connect_wifi()
 
@@ -376,6 +507,17 @@ def main():
                 selected_type = 2
             elif key == '*':
                 trigger_ota_update()  # 🚀 Trigger OTA when * is pressed
+            elif key == 'B':
+                trigger_barcode_request()  # 🔍 Get last barcode when B is pressed
+                # After barcode request, return to type selection
+                lcd.move_to(0, 0)
+                lcd.putstr("                ")  # Clear first row
+                lcd.move_to(1, 0)
+                lcd.putstr("                ")  # Clear second row
+                lcd.move_to(0, 0)
+                lcd.putstr("Select:")
+                lcd.move_to(0, 8)
+                lcd.putstr("1:L 2:H")
 
             if key:
                 time.sleep_ms(300)
@@ -395,8 +537,8 @@ def main():
         update_wifi_status()
 
         # Step 2: Receive weight from UART
-        # received_weight = receive_number()
-        received_weight = "5078"  # For testing
+        received_weight = receive_number()
+        # received_weight = "5078"  # For testing
 
         lcd.move_to(0, 0)
         lcd.putstr("                ")  # Clear first row
@@ -409,8 +551,9 @@ def main():
 
         # Step 3: Send to server and show response
         try:
-            url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber=50"
-            response = urequests.get(url)
+            # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=21&machineId=1
+            url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
+            response = urequests.post(url)
             response_text = response.text
             response.close()
 
@@ -418,7 +561,7 @@ def main():
             import json
             try:
                 response_json = json.loads(response_text)
-                number = str(response_json.get("numberZ", ''))
+                number = str(response_json.get("message", ''))
                 lcd.move_to(0, 0)
                 lcd.putstr("                ")  # Clear first row
                 lcd.move_to(0, 0)
