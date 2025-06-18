@@ -1,12 +1,13 @@
 import network
 import machine
 import time
-import urequests
 import json
+import socket
+import ssl
 
 # from ssd1306 import SSD1306_I2C  # Commented out OLED
 from ota import OTAUpdater
-from WIFI_CONFIG import SSID, PASSWORD
+# from WIFI_CONFIG import SSID, PASSWORD
 
 from machine import I2C, Pin
 from i2c_lcd import I2cLcd
@@ -379,9 +380,7 @@ def get_last_barcode(selected_type):
         lcd.putstr("Getting barcode...")
 
         # Send the GET request
-        response = urequests.get(url)
-        response_text = response.text
-        response.close()
+        response_text = http_get(url)
 
         # Parse JSON and extract barcode
         import json
@@ -552,8 +551,8 @@ def main():
         update_wifi_status()
 
         # Step 2: Receive weight from UART
-        received_weight = receive_number()
-        # received_weight = "5078"  # For testing
+        # received_weight = receive_number()
+        received_weight = "5078"  # For testing
 
         lcd.move_to(0, 0)
         lcd.putstr("                ")  # Clear first row
@@ -566,18 +565,16 @@ def main():
 
         # Step 3: Send to server and show response
         try:
-            url = "http://shatat-ue.runasp.net/api/Devices/LiverAndHeart"
-            headers = {"Content-Type": "application/json"}
+            url = "http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=2&machineId=3"
+            #headers = {"Content-Type": "application/json"}
             
-            payload = {
-                "type": 1,
-                "weight": 22,
-                "machineId": 1
-            }
+           # payload = {
+           #     "type": 1,
+          #      "weight": 22,
+          #      "machineId": 1
+          #  }
 
-            response = urequests.post(url, headers=headers, data=json.dumps(payload))
-            response_text = response.text
-            response.close()
+            response_text = http_post(url)
         # try:
         #     # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=21&machineId=1
         #     # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=12&machineId=1
@@ -716,6 +713,111 @@ def main2():
 #         lcd.move_to(0, 0)
 #         lcd.putstr(weight)
         weight = ""
+
+# HTTP Client functions using built-in libraries
+def http_get(url):
+    """Make HTTP GET request using built-in libraries"""
+    try:
+        # Parse URL
+        if url.startswith('http://'):
+            url = url[7:]
+        elif url.startswith('https://'):
+            url = url[8:]
+        
+        # Split host and path
+        if '/' in url:
+            host, path = url.split('/', 1)
+            path = '/' + path
+        else:
+            host = url
+            path = '/'
+        
+        # Create socket connection
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host, 80))
+        
+        # Send HTTP GET request
+        request = f"GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n"
+        sock.send(request.encode())
+        
+        # Read response
+        response = b""
+        while True:
+            data = sock.recv(1024)
+            if not data:
+                break
+            response += data
+        
+        sock.close()
+        
+        # Parse response
+        if b'\r\n\r\n' in response:
+            headers, body = response.split(b'\r\n\r\n', 1)
+            return body.decode('utf-8')
+        else:
+            return response.decode('utf-8')
+            
+    except Exception as e:
+        raise Exception(f"HTTP GET failed: {str(e)}")
+
+def http_post(url, data=None, headers=None):
+    """Make HTTP POST request using built-in libraries"""
+    try:
+        # Parse URL
+        if url.startswith('http://'):
+            url = url[7:]
+        elif url.startswith('https://'):
+            url = url[8:]
+        
+        # Split host and path
+        if '/' in url:
+            host, path = url.split('/', 1)
+            path = '/' + path
+        else:
+            host = url
+            path = '/'
+        
+        # Prepare headers
+        if headers is None:
+            headers = {}
+        
+        # Prepare data
+        if data is None:
+            data = ""
+        
+        # Create socket connection
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host, 80))
+        
+        # Send HTTP POST request
+        request = f"POST {path} HTTP/1.1\r\nHost: {host}\r\n"
+        request += f"Content-Length: {len(data)}\r\n"
+        for key, value in headers.items():
+            request += f"{key}: {value}\r\n"
+        request += "Connection: close\r\n\r\n"
+        request += data
+        
+        sock.send(request.encode())
+        
+        # Read response
+        response = b""
+        while True:
+            data = sock.recv(1024)
+            if not data:
+                break
+            response += data
+        
+        sock.close()
+        
+        # Parse response
+        if b'\r\n\r\n' in response:
+            headers, body = response.split(b'\r\n\r\n', 1)
+            return body.decode('utf-8')
+        else:
+            return response.decode('utf-8')
+            
+    except Exception as e:
+        raise Exception(f"HTTP POST failed: {str(e)}")
 
 if __name__ == "__main__":
     
