@@ -565,7 +565,8 @@ def main():
         # Step 3: Send to server and show response
         try:
             # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=21&machineId=1
-            url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
+            # url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
+            url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight=14&machineId=1"
             response = urequests.post(url)
             response_text = response.text
             response.close()
