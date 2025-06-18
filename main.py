@@ -551,8 +551,8 @@ def main():
         update_wifi_status()
 
         # Step 2: Receive weight from UART
-        # received_weight = receive_number()
-        received_weight = "5078"  # For testing
+        received_weight = receive_number()
+        # received_weight = "5078"  # For testing
 
         lcd.move_to(0, 0)
         lcd.putstr("                ")  # Clear first row
