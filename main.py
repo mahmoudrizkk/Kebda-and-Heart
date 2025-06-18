@@ -21,11 +21,24 @@ lcd = I2cLcd(i2c, I2C_ADDR, I2C_NUM_ROWS, I2C_NUM_COLS)
 # Initialize LCD with welcome message
 lcd.move_to(0, 0)
 lcd.putstr("Kebda & Heart")
-lcd.move_to(1, 0)
-lcd.putstr("                ")  # Clear second row for WiFi status
+
+# Read version from JSON file
+try:
+    import json
+    with open('version.json', 'r') as f:
+        version_data = json.load(f)
+        version = str(version_data.get('version', 'Unknown'))
+    lcd.move_to(1, 0)
+    lcd.putstr(f"Version: {version}")
+except Exception as e:
+    lcd.move_to(1, 0)
+    lcd.putstr("Version: Unknown")
+
 time.sleep(2)
 lcd.move_to(0, 0)
 lcd.putstr("                ")  # Clear first row
+lcd.move_to(1, 0)
+lcd.putstr("                ")  # Clear second row for WiFi status
 
 # Comment out OLED setup
 # WIDTH = 128
@@ -33,7 +46,7 @@ lcd.putstr("                ")  # Clear first row
 # oled = SSD1306_I2C(WIDTH, HEIGHT, i2c)
 
 # Wi-Fi credentials
-SSID = "POCO"
+SSID = "SYS-Horizon"
 PASSWORD = "qwerty123"
 
 # Keypad 4x4
