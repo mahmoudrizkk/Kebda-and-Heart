@@ -2,8 +2,7 @@ import network
 import machine
 import time
 import json
-import socket
-import ssl
+import requests
 
 # from ssd1306 import SSD1306_I2C  # Commented out OLED
 from ota import OTAUpdater
@@ -368,7 +367,7 @@ def get_last_barcode(selected_type):
     """
     Call the LastBarcodeForLiverAndHeart API to get the last barcode for the selected type
     """
-    url = f"http://shatat-ue.runasp.net/api/Devices/LastBarcodeForLiverAndHeart?type={selected_type}"
+    url = f"http://shatat-ue.runasp.net/api/Devices/TEST?inputNumber={selected_type}"
     
     try:
         update_wifi_status()
@@ -379,14 +378,15 @@ def get_last_barcode(selected_type):
         lcd.move_to(0, 0)
         lcd.putstr("Getting barcode...")
 
-        # Send the GET request
-        response_text = http_get(url)
+        # Send the GET request using requests library
+        response = requests.get(url, timeout=10)
+        response_text = response.text
+        response.close()
 
         # Parse JSON and extract barcode
-        import json
         try:
             response_json = json.loads(response_text)
-            barcode = str(response_json.get('message', ''))
+            barcode = str(response_json.get('numberZ', ''))
             
             if barcode:
                 lcd.move_to(0, 0)
@@ -565,25 +565,12 @@ def main():
 
         # Step 3: Send to server and show response
         try:
-            url = "http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=2&machineId=3"
-            #headers = {"Content-Type": "application/json"}
+            url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
             
-           # payload = {
-           #     "type": 1,
-          #      "weight": 22,
-          #      "machineId": 1
-          #  }
-
-            response_text = http_post(url)
-        # try:
-        #     # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=21&machineId=1
-        #     # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=12&machineId=1
-        #     # url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
-        #     headers = {"Content-Type": "application/json"}
-        #     url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
-        #     response = urequests.request("POST",url,headers=headers)
-        #     response_text = response.text
-        #     response.close()
+            # Send the GET request using requests library
+            response = requests.get(url, timeout=10)
+            response_text = response.text
+            response.close()
 
             # Parse JSON and extract number
             try:
@@ -713,111 +700,6 @@ def main2():
 #         lcd.move_to(0, 0)
 #         lcd.putstr(weight)
         weight = ""
-
-# HTTP Client functions using built-in libraries
-def http_get(url):
-    """Make HTTP GET request using built-in libraries"""
-    try:
-        # Parse URL
-        if url.startswith('http://'):
-            url = url[7:]
-        elif url.startswith('https://'):
-            url = url[8:]
-        
-        # Split host and path
-        if '/' in url:
-            host, path = url.split('/', 1)
-            path = '/' + path
-        else:
-            host = url
-            path = '/'
-        
-        # Create socket connection
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, 80))
-        
-        # Send HTTP GET request
-        request = f"GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n"
-        sock.send(request.encode())
-        
-        # Read response
-        response = b""
-        while True:
-            data = sock.recv(1024)
-            if not data:
-                break
-            response += data
-        
-        sock.close()
-        
-        # Parse response
-        if b'\r\n\r\n' in response:
-            headers, body = response.split(b'\r\n\r\n', 1)
-            return body.decode('utf-8')
-        else:
-            return response.decode('utf-8')
-            
-    except Exception as e:
-        raise Exception(f"HTTP GET failed: {str(e)}")
-
-def http_post(url, data=None, headers=None):
-    """Make HTTP POST request using built-in libraries"""
-    try:
-        # Parse URL
-        if url.startswith('http://'):
-            url = url[7:]
-        elif url.startswith('https://'):
-            url = url[8:]
-        
-        # Split host and path
-        if '/' in url:
-            host, path = url.split('/', 1)
-            path = '/' + path
-        else:
-            host = url
-            path = '/'
-        
-        # Prepare headers
-        if headers is None:
-            headers = {}
-        
-        # Prepare data
-        if data is None:
-            data = ""
-        
-        # Create socket connection
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, 80))
-        
-        # Send HTTP POST request
-        request = f"POST {path} HTTP/1.1\r\nHost: {host}\r\n"
-        request += f"Content-Length: {len(data)}\r\n"
-        for key, value in headers.items():
-            request += f"{key}: {value}\r\n"
-        request += "Connection: close\r\n\r\n"
-        request += data
-        
-        sock.send(request.encode())
-        
-        # Read response
-        response = b""
-        while True:
-            data = sock.recv(1024)
-            if not data:
-                break
-            response += data
-        
-        sock.close()
-        
-        # Parse response
-        if b'\r\n\r\n' in response:
-            headers, body = response.split(b'\r\n\r\n', 1)
-            return body.decode('utf-8')
-        else:
-            return response.decode('utf-8')
-            
-    except Exception as e:
-        raise Exception(f"HTTP POST failed: {str(e)}")
 
 if __name__ == "__main__":
     
