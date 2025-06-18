@@ -275,6 +275,7 @@ def extract_between_plus_and_k(text = "+ k"):
         return ''
 
 def trigger_ota_update():
+    time.sleep(0.5)
     lcd.move_to(0, 0)
     lcd.putstr("                ")  # Clear first row
     lcd.move_to(0, 0)
@@ -290,7 +291,7 @@ def trigger_ota_update():
         key = scan_keypad()
         
         if key and key != last_key:
-            if key == 'D':  # ENTER
+            if key == '#':  # ENTER
                 if password_buffer == "1234":  # You can change this password
                     lcd.move_to(0, 0)
                     lcd.putstr("                ")  # Clear first row
@@ -327,7 +328,7 @@ def trigger_ota_update():
                     lcd.putstr("Enter Password:")
                     lcd.move_to(0, 15)
                     lcd.putstr("*")
-            elif key == '#':  # Cancel
+            elif key == '*':  # Cancel
                 lcd.move_to(0, 0)
                 lcd.putstr("                ")  # Clear first row
                 lcd.move_to(0, 0)
@@ -348,14 +349,14 @@ def trigger_ota_update():
                 lcd.putstr("Enter Password:")
                 lcd.move_to(0, 15)
                 lcd.putstr("*" * min(len(password_buffer), 1))
-            elif key == '*':  # Backspace
-                password_buffer = password_buffer[:-1]
-                lcd.move_to(0, 0)
-                lcd.putstr("                ")  # Clear first row
-                lcd.move_to(0, 0)
-                lcd.putstr("Enter Password:")
-                lcd.move_to(0, 15)
-                lcd.putstr("*" * min(len(password_buffer), 1))
+            # elif key == '*':  # Backspace
+            #     password_buffer = password_buffer[:-1]
+            #     lcd.move_to(0, 0)
+            #     lcd.putstr("                ")  # Clear first row
+            #     lcd.move_to(0, 0)
+            #     lcd.putstr("Enter Password:")
+            #     lcd.move_to(0, 15)
+            #     lcd.putstr("*" * min(len(password_buffer), 1))
             last_key = key
         elif not key:
             last_key = None
