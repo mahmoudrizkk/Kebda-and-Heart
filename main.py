@@ -2,6 +2,8 @@ import network
 import machine
 import time
 import urequests
+import json
+
 # from ssd1306 import SSD1306_I2C  # Commented out OLED
 from ota import OTAUpdater
 from WIFI_CONFIG import SSID, PASSWORD
@@ -568,16 +570,25 @@ def main():
             headers = {"Content-Type": "application/json"}
             
             payload = {
-                "type": selected_type,
-                "weight": received_weight,
+                "type": 1,
+                "weight": 22,
                 "machineId": 1
             }
 
             response = urequests.post(url, headers=headers, data=json.dumps(payload))
             response_text = response.text
             response.close()
-      # Parse JSON and extract number
-            import json
+        # try:
+        #     # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=21&machineId=1
+        #     # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=12&machineId=1
+        #     # url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
+        #     headers = {"Content-Type": "application/json"}
+        #     url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
+        #     response = urequests.request("POST",url,headers=headers)
+        #     response_text = response.text
+        #     response.close()
+
+            # Parse JSON and extract number
             try:
                 response_json = json.loads(response_text)
                 number = str(response_json.get("message", ''))
