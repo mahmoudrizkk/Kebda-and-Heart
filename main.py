@@ -46,7 +46,7 @@ lcd.putstr("                ")  # Clear second row for WiFi status
 # oled = SSD1306_I2C(WIDTH, HEIGHT, i2c)
 
 # Wi-Fi credentials
-SSID = "SYS-Horizon"
+SSID = "POCO"
 PASSWORD = "qwerty123"
 
 # Keypad 4x4
