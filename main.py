@@ -564,15 +564,19 @@ def main():
 
         # Step 3: Send to server and show response
         try:
-            # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=21&machineId=1
-            # http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight=12&machineId=1
-            # url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type={selected_type}&weight={received_weight}&machineId=1"
-            url = f"http://shatat-ue.runasp.net/api/Devices/LiverAndHeart?type=1&weight={received_weight}&machineId=1"
-            response = urequests.request("POST",url)
+            url = "http://shatat-ue.runasp.net/api/Devices/LiverAndHeart"
+            headers = {"Content-Type": "application/json"}
+            
+            payload = {
+                "type": selected_type,
+                "weight": received_weight,
+                "machineId": 1
+            }
+
+            response = urequests.post(url, headers=headers, data=json.dumps(payload))
             response_text = response.text
             response.close()
-
-            # Parse JSON and extract number
+      # Parse JSON and extract number
             import json
             try:
                 response_json = json.loads(response_text)
