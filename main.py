@@ -399,7 +399,7 @@ def get_last_barcode(selected_type):
                     lcd.putstr(barcode[:8])
                     
                     # Send the barcode via UART
-                    uart.write(barcode.encode() + b'=\r\n')
+                    uart.write(barcode.encode() + b'=')
                     
                     time.sleep(3)
                     lcd.move_to(0, 0)
