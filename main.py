@@ -387,30 +387,42 @@ def get_last_barcode(selected_type):
         # Parse JSON and extract barcode
         try:
             response_json = json.loads(response_text)
+            status_code = str(response_json.get('statusCode',''))
             barcode = str(response_json.get('message', ''))
-            
-            if barcode:
+            if status_code == "200":
+                if barcode:
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
+                    lcd.putstr("Barcode:")
+                    lcd.move_to(0, 8)
+                    lcd.putstr(barcode[:8])
+                    
+                    # Send the barcode via UART
+                    uart.write(barcode.encode() + b'=\r\n')
+                    
+                    time.sleep(3)
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
+                    lcd.putstr("Barcode sent!")
+                else:
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
+                    lcd.putstr("No barcode found")
+            elif status_code == "404":
                 lcd.move_to(0, 0)
                 lcd.putstr("                ")  # Clear first row
                 lcd.move_to(0, 0)
-                lcd.putstr("Barcode:")
-                lcd.move_to(0, 8)
-                lcd.putstr(barcode[:8])
-                
-                # Send the barcode via UART
-                uart.write(barcode.encode() + b'=\r\n')
-                
+                lcd.putstr("No cow found for today")
                 time.sleep(3)
-                lcd.move_to(0, 0)
-                lcd.putstr("                ")  # Clear first row
-                lcd.move_to(0, 0)
-                lcd.putstr("Barcode sent!")
             else:
                 lcd.move_to(0, 0)
                 lcd.putstr("                ")  # Clear first row
                 lcd.move_to(0, 0)
-                lcd.putstr("No barcode found")
-                uart.write(b'NO_BARCODE=\r\n')
+                lcd.putstr("Error")
+                time.sleep(3)
                 
         except json.JSONDecodeError:
             # Handle JSON parsing error
@@ -418,14 +430,12 @@ def get_last_barcode(selected_type):
             lcd.putstr("                ")  # Clear first row
             lcd.move_to(0, 0)
             lcd.putstr("JSON Error")
-            uart.write(b'ERROR=\r\n')
         except Exception as e:
             # Handle other errors
             lcd.move_to(0, 0)
             lcd.putstr("                ")  # Clear first row
             lcd.move_to(0, 0)
             lcd.putstr("Error")
-            uart.write(b'ERROR=\r\n')
 
         time.sleep(2)
         lcd.move_to(0, 0)
@@ -576,24 +586,33 @@ def main():
             # Parse JSON and extract number
             try:
                 response_json = json.loads(response_text)
+                status_code = str(response_json.get('statusCode',''))
                 number = str(response_json.get("message", ''))
-                lcd.move_to(0, 0)
-                lcd.putstr("                ")  # Clear first row
-                lcd.move_to(0, 0)
-                lcd.putstr("Number:")
-                lcd.move_to(0, 7)
-                lcd.putstr(number[:9])
-                # Send only the number via UART
-                uart.write(number.encode() + b'=')
+                if status_code == "200":
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
+                    lcd.putstr("Number:")
+                    lcd.move_to(0, 7)
+                    lcd.putstr(number[:9])
+                    # Send only the number via UART
+                    uart.write(number.encode() + b'=')
+                elif status_code == "404":
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
+                    lcd.putstr("No Cow Today")
+                else:
+                    lcd.move_to(0, 0)
+                    lcd.putstr("                ")  # Clear first row
+                    lcd.move_to(0, 0)
+                    lcd.putstr("Error")
             except:
                 # If JSON parsing fails, send the original response
                 lcd.move_to(0, 0)
                 lcd.putstr("                ")  # Clear first row
                 lcd.move_to(0, 0)
-                lcd.putstr("Response:")
-                lcd.move_to(0, 9)
                 lcd.putstr(response_text[:7])
-                uart.write(response_text.encode() + b'\r\n')
 
         except Exception as e:
             lcd.move_to(0, 0)
@@ -610,7 +629,7 @@ def main():
         lcd.move_to(0, 0)
         lcd.putstr("                ")  # Clear first row
         lcd.move_to(0, 0)
-        lcd.putstr("Success!")
+        lcd.putstr("Done!")
         update_wifi_status()
         time.sleep(2)
 
